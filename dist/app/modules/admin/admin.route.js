@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AdminRoutes = void 0;
+const express_1 = require("express");
+const admin_controller_1 = require("./admin.controller");
+const validateRequest_1 = require("../../middlewares/validateRequest");
+const admin_validation_1 = require("./admin.validation");
+const multer_config_1 = require("../../config/multer.config");
+const bodyParser_1 = require("../../middlewares/bodyParser");
+const client_1 = require("@prisma/client");
+const auth_1 = __importDefault(require("../../middlewares/auth"));
+const router = (0, express_1.Router)();
+router.get("/", (0, auth_1.default)(client_1.UserRole.DOCTOR, client_1.UserRole.SUPER_ADMIN, client_1.UserRole.ADMIN, client_1.UserRole.PATIENT), admin_controller_1.AdminControllers.getAllAdmins);
+router.get("/:id", admin_controller_1.AdminControllers.getSingleAdmin);
+router.patch("/update/:id", (0, auth_1.default)(client_1.UserRole.SUPER_ADMIN, client_1.UserRole.ADMIN), multer_config_1.multerUpload.single("image"), bodyParser_1.parseBody, (0, validateRequest_1.validateRequest)(admin_validation_1.AdminValidations.updateAdminValidationSchema), admin_controller_1.AdminControllers.updateAdmin);
+router.delete("/delete/:id", (0, auth_1.default)(client_1.UserRole.SUPER_ADMIN, client_1.UserRole.ADMIN), admin_controller_1.AdminControllers.deleteAdmin);
+exports.AdminRoutes = router;

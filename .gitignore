@@ -1,0 +1,12 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+
+# git remote add origin https://github.com/ronyislam502/health-care-server-postgreSql-prisma-.git
+
+
+
+.vercel
