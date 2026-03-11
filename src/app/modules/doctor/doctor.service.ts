@@ -3,8 +3,9 @@ import prisma from "../../shared/prisma";
 import { TMeta } from "../../shared/sendResponse";
 import { doctorSearchableFields, TDoctorUpdate } from "./doctor.interface";
 import HealthQueryBuilder from "../../builder/healthQuery";
-import { openai } from "../../shared/openai";
 import AppError from "../../errors/AppError";
+import httpStatus from "http-status";
+import { extractDoctorFromMessage, openai } from "../../shared/openai";
 
 const getAllDoctorsFromDB = async (
   query: Record<string, unknown>
@@ -154,6 +155,7 @@ const updateDoctorFromDB = async (
 };
 
 const aiDoctorSuggestionFromDB = async (payload: { symptoms: string }) => {
+  console.log("payload", payload)
   if (!(payload && payload.symptoms)) {
    throw new AppError(httpStatus.BAD_REQUEST, "Symptoms are required")
   }
@@ -168,6 +170,83 @@ const aiDoctorSuggestionFromDB = async (payload: { symptoms: string }) => {
       }
     }
   })
+
+  console.log("doctors", doctors)
+
+//    const prompt = `
+//       User Symptoms:
+//           ${payload.symptoms}
+
+//      Available Doctors:
+//      ${JSON.stringify(doctors, null, 2)}
+
+// Based on symptoms, suggest the best doctor specialty and doctor name.
+// Return your response in JSON format with full individual doctor data.
+  // `;
+  
+  const prompt = `
+You are a professional AI medical assistant.
+
+User Symptoms:
+${payload.symptoms}
+
+Available Doctors (full details):
+${JSON.stringify(doctors, null, 2)}
+
+Instructions:
+1. Based on the user's symptoms, determine the most relevant doctor specialty.
+2. Suggest the best matching doctor(s) from the list above.
+3. Return your response strictly in JSON format with this structure:
+
+{
+  "suggestedSpecialty": "Name of the specialty",
+  "suggestedDoctors": [
+    {
+      "id": "...",
+      "name": "...",
+      "email": "...",
+      "phone": "...",
+      "avatar": "...",
+      "address": "...",
+      "registrationNumber": "...",
+      "experience": ...,
+      "gender": "...",
+      "appointmentFee": ...,
+      "qualification": "...",
+      "currentWorkingPlace": "...",
+      "designation": "...",
+      "doctorSpecialties": [ ... ]
+    }
+  ]
+}
+
+Notes:
+- Return only valid JSON. Do not include any explanation or extra text.
+- The doctors in the suggestedDoctors array must be from the provided list.
+`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'arcee-ai/trinity-large-preview:free',
+    messages: [
+    {
+        role: "system",
+        content: `
+You are a professional AI medical assistant.
+        `,
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+  });
+  console.log(completion.choices[0].message);
+
+  const result = await extractDoctorFromMessage(completion.choices[0].message);
+  console.log("result", result)
+
+  return result
+  
 }
 
 export const DoctorServices = {

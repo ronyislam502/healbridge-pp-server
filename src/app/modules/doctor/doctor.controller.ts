@@ -57,7 +57,7 @@ const aiDoctorSuggestion = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Doctor deleted successfully",
+    message: "AI suggestion doctors successfully",
     data: result,
   });
 });
@@ -67,4 +67,5 @@ export const DoctorControllers = {
   getSingleDoctor,
   deleteDoctor,
   updateDoctor,
+  aiDoctorSuggestion
 };

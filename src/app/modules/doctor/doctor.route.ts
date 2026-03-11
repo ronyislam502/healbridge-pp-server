@@ -5,9 +5,12 @@ import { UserRole } from "@prisma/client";
 
 const router = Router();
 
+
+router.post("/suggestion", DoctorControllers.aiDoctorSuggestion);
+
 router.get(
   "/",
-  auth(UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.PATIENT),
+  // auth(UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.PATIENT),
   DoctorControllers.getAllDoctors
 );
 

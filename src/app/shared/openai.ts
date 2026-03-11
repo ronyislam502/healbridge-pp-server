@@ -7,18 +7,36 @@ export const openai = new OpenAI({
   apiKey: config.openai_api_key,
 });
 
-// async function main() {
-//   const completion = await openai.chat.completions.create({
-//     model: 'openai/gpt-5.2',
-//     messages: [
-//       {
-//         role: 'user',
-//         content: 'What is the meaning of life?',
-//       },
-//     ],
-//   });
+export const extractDoctorFromMessage = (message: any) => {
+  try {
+    const content = message?.content || "";
 
-//   console.log(completion.choices[0].message);
-// }
+    let parsed: any = null;
 
-// main();
+    // 1️⃣ Try to extract JSON code block
+    const jsonBlockMatch = content.match(/```json([\s\S]*?)```/);
+    if (jsonBlockMatch) {
+      parsed = JSON.parse(jsonBlockMatch[1].trim());
+    }
+    // 2️⃣ If content is plain JSON
+    else if (content.trim().startsWith("{") || content.trim().startsWith("[")) {
+      parsed = JSON.parse(content);
+    }
+    // 3️⃣ Fallback: first JSON-like substring
+    else {
+      const jsonFallbackMatch = content.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (jsonFallbackMatch) parsed = JSON.parse(jsonFallbackMatch[1]);
+    }
+
+    // 4️⃣ Return only suggestedDoctors array if exists
+    if (parsed && parsed.suggestedDoctors) {
+      return parsed.suggestedDoctors;
+    }
+
+    // 5️⃣ Fallback: return null
+    return null;
+  } catch (error) {
+    console.error("Error parsing AI response:", error);
+    return null;
+  }
+};
