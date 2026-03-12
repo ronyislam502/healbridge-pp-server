@@ -3,6 +3,87 @@ import prisma from "../../shared/prisma";
 import { TMeta } from "../../shared/sendResponse";
 import { doctorSearchableFields, TDoctorUpdate } from "./doctor.interface";
 import HealthQueryBuilder from "../../builder/healthQuery";
+import { extractDoctorFromMessage, openai } from "../../shared/openai";
+import AppError from "../../errors/AppError";
+
+const aiDoctorSuggestionFromDB = async (payload: { symptoms: string }) => {
+  if (!(payload && payload.symptoms)) {
+   throw new AppError(httpStatus.BAD_REQUEST, "Symptoms are required")
+  }
+  
+  const doctors = await prisma.doctor.findMany({
+    where: { isDeleted: false },
+    include: {
+      doctorSpecialties: {
+        include: {
+          specialties:true
+        }
+      }
+    }
+  })
+
+  
+  const prompt = `
+You are a professional AI medical assistant.
+
+User Symptoms:
+${payload.symptoms}
+
+Available Doctors and doctor list (full details):
+${JSON.stringify(doctors, null, 2)}
+
+Instructions:
+1. Based on the user's symptoms, determine the most relevant doctor specialty.
+2. Suggest the best matching doctor(s) from the list above.
+3. Return your response strictly in JSON format with this structure:
+
+{
+  "suggestedSpecialty": "Name of the specialty",
+  "suggestedDoctors": [
+    {
+      "id": "...",
+      "name": "...",
+      "email": "...",
+      "phone": "...",
+      "avatar": "...",
+      "registrationNumber": "...",
+      "experience": ...,
+      "gender": "...",
+      "appointmentFee": ...,
+      "qualification": "...",
+      "currentWorkingPlace": "...",
+      "designation": "...",
+      "doctorSpecialties": [ ... ]
+    }
+  ]
+}
+
+Notes:
+- Return only valid JSON. Do not include any explanation or extra text.
+- The doctors in the suggestedDoctors array must be from the provided list.
+`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'arcee-ai/trinity-large-preview:free',
+    messages: [
+    {
+        role: "system",
+        content: `AI medical assistant.
+        `,
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+  });
+  // console.log(completion.choices[0].message);
+
+  const result = await extractDoctorFromMessage(completion.choices[0].message);
+
+  return result;
+  
+}
 
 const getAllDoctorsFromDB = async (
   query: Record<string, unknown>
@@ -152,6 +233,7 @@ const updateDoctorFromDB = async (
 };
 
 export const DoctorServices = {
+  aiDoctorSuggestionFromDB,
   getAllDoctorsFromDB,
   getSingleDoctorFromDB,
   deleteDoctorFromDB,

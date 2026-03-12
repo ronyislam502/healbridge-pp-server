@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { DoctorControllers } from "./doctor.controller";
-import { multerUpload } from "../../config/multer.config";
-import { parseBody } from "../../middlewares/bodyParser";
 import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 
 const router = Router();
+
+router.post("/suggestion", DoctorControllers.aiDoctorSuggestion);
 
 router.get(
   "/",
