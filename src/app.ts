@@ -6,6 +6,7 @@ import cron from "node-cron";
 import notFound from "./app/middlewares/notFound";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import { AppointmentServices } from "./app/modules/appointment/appointment.service";
+import { PaymentController } from "./app/modules/payment/payment.controller";
 
 const app: Application = express();
 
@@ -15,6 +16,12 @@ app.use(cookieParser());
 
 //parser
 app.use(express.urlencoded({ extended: true }));
+
+app.post(
+    "/webhook",
+    express.raw({ type: "application/json" }),
+    PaymentController.handleStripeWebhookEvent
+);
 
 cron.schedule("* * * * *", () => {
   try {

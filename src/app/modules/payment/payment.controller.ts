@@ -5,10 +5,10 @@ import { stripe } from "../../shared/stripe";
 import { PaymentServices } from "./payment.service";
 
 
-const handleStripeWebhookEvent = catchAsync(async (req, res, next) => {
+const handleStripeWebhookEvent = catchAsync(async (req,  res) => {
 
     const sig = req.headers["stripe-signature"] as string;
-    const webhookSecret = "whsec_7aa0e876564d7172ed1ebbda82f18cd6c740ac93ff44efecbf654c0d71bf3f1c"
+    const webhookSecret = "whsec_4b9861f2bc01b4ecf6984530b8bd7476eaf780ea81337d3bef97a1a60cd7627c"
 
     let event;
     try {
