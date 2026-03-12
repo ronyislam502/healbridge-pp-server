@@ -1,16 +1,15 @@
 import { Router } from "express";
 import { DoctorControllers } from "./doctor.controller";
+import { multerUpload } from "../../config/multer.config";
+import { parseBody } from "../../middlewares/bodyParser";
 import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 
 const router = Router();
 
-
-router.post("/suggestion", DoctorControllers.aiDoctorSuggestion);
-
 router.get(
   "/",
-  // auth(UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.PATIENT),
+  auth(UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.PATIENT),
   DoctorControllers.getAllDoctors
 );
 

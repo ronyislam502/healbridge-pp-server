@@ -24,5 +24,4 @@ export default {
   live_server_url: process.env.SSL_LIVE_URL_SERVER,
   ssl_payment_api: process.env.SSL_PAYMENT_API,
   ssl_validation_api: process.env.SSL_VALIDATION_API,
-  openai_api_key: process.env.OPENAI_API_KEY
 };

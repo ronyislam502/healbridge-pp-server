@@ -10,7 +10,7 @@ const createDoctorScheduleIntoDB = async (user: any, payload: any) => {
     },
   });
 
-  const schedule = payload.scheduleIds.map((scheduleId: string) => ({
+  const schedule = payload.scheduleIds?.map((scheduleId: string) => ({
     doctorId: isDoctor.id,
     scheduleId,
   }));
