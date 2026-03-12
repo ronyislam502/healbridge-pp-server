@@ -3,7 +3,9 @@ import prisma from "../../shared/prisma";
 import HealthQueryBuilder from "../../builder/healthQuery";
 import AppError from "../../errors/AppError";
 
-const createDoctorScheduleIntoDB = async (user: any, payload: any) => {
+const createDoctorScheduleIntoDB = async (user: JwtPayload, payload: {
+    scheduleIds: string[]
+})  => {
   const isDoctor = await prisma.doctor.findUniqueOrThrow({
     where: {
       email: user.email,

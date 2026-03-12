@@ -10,6 +10,7 @@ import {
   UserRole,
 } from "@prisma/client";
 import HealthQueryBuilder from "../../builder/healthQuery";
+import { stripe } from "../../shared/stripe";
 
 const createAppointmentIntoDB = async (
   user: JwtPayload,
@@ -73,7 +74,7 @@ const createAppointmentIntoDB = async (
       const today = new Date();
       console.log("to", today);
       const transactionId =
-        "HC" +
+        "HB" +
         today.getFullYear() +
         +today.getMonth() +
         +today.getDay() +
@@ -83,7 +84,7 @@ const createAppointmentIntoDB = async (
 
       console.log("trans_id", transactionId);
 
-      await transactionClient.payment.create({
+     const paymentData= await transactionClient.payment.create({
         data: {
           appointmentId: appointmentData.id,
           amount: isDoctor.appointmentFee,
@@ -91,7 +92,39 @@ const createAppointmentIntoDB = async (
         },
       });
 
-      return appointmentData;
+      const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: `Appointment with ${isDoctor.name}`,
+                },
+                unit_amount: paymentData.amount * 100,
+              },
+              quantity: 1,
+            },
+          ],
+        mode: "payment",
+          success_url: `https://www.programming-hero.com/`,
+          cancel_url: `https://next.programming-hero.com/`,
+          // success_url: `${config.reset_pass_link}/success?session_id={CHECKOUT_SESSION_ID}`,
+          // cancel_url: `${config.reset_pass_link}/cancel`,
+          customer_email: isPatient.email,
+          metadata: {
+            appointmentId: paymentData.appointmentId,
+            transactionId: paymentData.transactionId,
+        },
+           payment_intent_data: {
+             metadata: {
+             appointmentId: appointmentData.id,
+             transactionId,
+          },
+        },
+      });
+       return { paymentUrl: session.url };
+      // return appointmentData;
     }
   );
 
