@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
-import { Prisma } from "@prisma/client";
 import { TErrorSources } from "../interface/error";
-import config from "../config";
+import handleZodError from "../error/handleZodError";
+import handlePrismaValidationError from "../error/handleValidationError";
+import handlePrismaCastError from "../error/handleCastError";
+import handleDuplicateError from "../error/handleDuplicateError";
+import AppError from "../error/AppError";
+import config from "../../config";
 
 // Custom AppError
-import AppError from "../errors/AppError";
-import handleZodError from "../errors/handleZodError";
-import handlePrismaValidationError from "../errors/handleValidationError";
-import handlePrismaCastError from "../errors/handleCastError";
-import handleDuplicateError from "../errors/handleDuplicateError";
+
 
 const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
   let statusCode = 500;
