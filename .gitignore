@@ -4,6 +4,3 @@ dist
 .env.test
 
 /src/generated/prisma
-
-
-# git remote add origin https://github.com/ronyislam502/healbridge-pp-server.git

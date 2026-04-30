@@ -1,6 +1,6 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
+// import cookieParser from "cookie-parser";
 import router from "./app/routes";
 import notFound from "./app/middlewares/notFound";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
@@ -10,10 +10,11 @@ const app: Application = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
+// app.use(cookieParser());
 
 //parser
 app.use(express.urlencoded({ extended: true }));
+
 
 const getController = (req: Request, res: Response) => {
   res.send("Health Care app");
