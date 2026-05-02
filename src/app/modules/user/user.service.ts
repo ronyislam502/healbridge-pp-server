@@ -1,4 +1,4 @@
-import config from "../../../config";
+import config from "../../config";
 import prisma, { TransactionClient } from "../../shared/prisma"
 import { Admin, UserRole } from '@prisma/client';
 
