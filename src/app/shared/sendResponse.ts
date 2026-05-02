@@ -4,7 +4,7 @@ export type TMeta = {
   limit: number;
   page: number;
   total: number;
-  totalPage: number;
+  totalPages: number;
 };
 
 type TResponse<T> = {
@@ -23,3 +23,5 @@ const sendResponse = <T>(res: Response, data: TResponse<T>) => {
     data: data?.data,
   });
 };
+
+export default sendResponse;
