@@ -7,4 +7,12 @@ import { AdminValidations } from "../admin/admin.validation";
 
 const router = Router();
 
-router.post("/create-admin", multerUpload.single("avatar"),parseBody,validateRequest(AdminValidations.createAdminValidationSchema), UserControllers.createAdmin);
+router.post("/create-admin",
+    multerUpload.single("avatar"),
+    parseBody,
+    validateRequest(AdminValidations.createAdminValidationSchema),
+    UserControllers.createAdmin);
+
+
+
+export const UserRoutes = router;

@@ -11,4 +11,11 @@ router.get("/", AdminControllers.allAdmins);
 
 router.get("/:id", AdminControllers.singleAdmin);
 
-router.patch("/update/:id", multerUpload.single("avatar"), parseBody,validateRequest(AdminValidations.updateAdminValidationSchema), AdminControllers.updateAdmin);
+router.patch("/update/:id",
+    multerUpload.single("avatar"),
+    parseBody,
+    validateRequest(AdminValidations.updateAdminValidationSchema),
+    AdminControllers.updateAdmin);
+
+
+export const AdminRoutes = router;
