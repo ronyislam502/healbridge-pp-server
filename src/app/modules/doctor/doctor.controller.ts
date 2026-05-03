@@ -4,7 +4,6 @@ import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
 import httpStatus  from 'http-status';
 import { DoctorServices } from "./doctor.service";
-import { AdminServices } from "../admin/admin.service";
 
 const allDoctors = catchAsync(async (req, res) => {
     const result = await DoctorServices.allDoctorsFromDB(req.query as IQueryParams);
