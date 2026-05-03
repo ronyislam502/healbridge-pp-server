@@ -18,6 +18,18 @@ export class QueryBuilder<T> {
   private skip = 0;
 
   private selectFields?: Record<string, boolean>;
+  
+  static calculatePagination(options: IQueryParams) {
+    const page = Number(options.page) || 1;
+    const limit = Number(options.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    return {
+      page,
+      limit,
+      skip,
+    };
+  }
 
   constructor(
     private model: PrismaModelDelegate<T>,
