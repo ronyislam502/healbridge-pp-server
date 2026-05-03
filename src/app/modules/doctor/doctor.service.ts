@@ -14,7 +14,11 @@ const allDoctorsFromDB = async (
         .filter()
         .sort()
         .paginate()
-        .fields();
+        .fields()
+        .include({
+            doctor: true,
+            schedule:true
+        });
     
     const data = await doctorBuilder.execute();
     const meta = await doctorBuilder.countTotal();
