@@ -3,6 +3,9 @@ import { UserRoutes } from "../modules/user/user.route";
 import { AdminRoutes } from "../modules/admin/admin.route";
 import { PatientRoutes } from "../modules/patient/patient.route";
 import { AuthRoutes } from "../modules/auth/auth.route";
+import { DoctorRoutes } from "../modules/doctor/doctor.route";
+import { SpecialtiesRoutes } from "../modules/specialties/specialtiesRoute";
+import { AppointmentRoutes } from "../modules/appointment/appointment.route";
 
 const router = Router();
 
@@ -22,9 +25,19 @@ const moduleRoutes = [
   {
     path: "/patients",
     route: PatientRoutes,
-  }
-  
-
+  },
+  {
+    path: "/doctors",
+    route: DoctorRoutes,
+  },
+  {
+    path: "/specialties",
+    route: SpecialtiesRoutes,
+  },
+  {
+    path: "/appointments",
+    route: AppointmentRoutes,
+  },
 ];
 
 moduleRoutes?.forEach((route) => router?.use(route?.path, route?.route));

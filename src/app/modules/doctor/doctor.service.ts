@@ -16,8 +16,16 @@ const allDoctorsFromDB = async (
         .paginate()
         .fields()
         .include({
-            doctor: true,
-            schedule:true
+            doctorSpecialties: {
+                include: {
+                    specialties: true
+                }
+            },
+            doctorSchedules: {
+                include: {
+                    schedule: true
+                }
+            }
         });
     
     const data = await doctorBuilder.execute();
