@@ -1,4 +1,4 @@
-import { Doctor } from "@prisma/client";
+import { Doctor, UserStatus } from "@prisma/client";
 import { QueryBuilder } from "../../builder/queryBuilder";
 import { IQueryParams } from "../../interface/query.interface";
 import prisma from "../../shared/prisma"
@@ -62,9 +62,43 @@ const updateDoctorIntoDB = async (
   return updatedDoctor;
 };
 
+const deleteDoctorFromDB = async (id: string): Promise<Doctor | null> => {
+  await prisma.doctor.findUniqueOrThrow({
+    where: {
+      id,
+      isDeleted: false,
+    },
+  });
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    const doctorDelete = await transactionClient.doctor.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    await transactionClient.user.update({
+      where: {
+        email: doctorDelete?.email,
+      },
+      data: {
+        status: UserStatus.DELETED,
+      },
+    });
+
+    return doctorDelete;
+  });
+
+  return result;
+};
+
 
 export const DoctorServices = {
     allDoctorsFromDB,
     singleDoctorFromDB,
-    updateDoctorIntoDB
+    updateDoctorIntoDB,
+    deleteDoctorFromDB
 }

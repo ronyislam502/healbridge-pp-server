@@ -20,4 +20,7 @@ router.patch("/update/:id",
     DoctorControllers.updateDoctor);
 
 
+router.delete("/delete/:id", DoctorControllers.deleteDoctor)
+
+
 export const DoctorRoutes = router;
