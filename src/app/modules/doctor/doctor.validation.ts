@@ -29,19 +29,43 @@ const createDoctorSchema = z.object({
 
 const updateDoctorSchema = z.object({
   body: z.object({
-    name: z.string().optional(),
-    phone: z.string().optional(),
-    registrationNumber: z.string().optional(),
-    experience: z.number().optional(),
-    gender: z.string().optional(),
-    appointmentFee: z.number().optional(),
-    qualification: z.string().optional(),
-    currentWorkingPlace: z.string().optional(),
-    designation: z.string().optional(),
+    doctor: z.object({
+      name: z.string().optional(),
+      phone: z.string().optional(),
+      registrationNumber: z.string().optional(),
+      experience: z.number().optional(),
+      gender: z.enum(Gender).optional(),
+      appointmentFee: z.number().optional(),
+      qualification: z.string().optional(),
+      currentWorkingPlace: z.string().optional(),
+      designation: z.string().optional(),
+      specialties: z
+        .array(
+          z.object({
+            specialtiesId: z.string(),
+            isDeleted: z.boolean().optional(),
+          })
+        )
+        .optional(),
+    }),
+  }),
+});
+
+
+const updateDoctorSpecialtiesSchema = z.object({
+  body: z.object({
+    specialties: z.array(
+      z.object({
+        specialtiesId: z.string(),
+        isDeleted: z.boolean().optional(),
+      })
+    ),
   }),
 });
 
 export const DoctorValidations = {
   createDoctorSchema,
   updateDoctorSchema,
+  updateDoctorSpecialtiesSchema,
 };
+

@@ -20,7 +20,14 @@ router.patch("/update/:id",
     DoctorControllers.updateDoctor);
 
 
-router.delete("/delete/:id", DoctorControllers.deleteDoctor)
+router.patch(
+  "/update-specialties/:id",
+  validateRequest(DoctorValidations.updateDoctorSpecialtiesSchema),
+  DoctorControllers.updateDoctorSpecialties
+);
+
+router.delete("/delete/:id", DoctorControllers.deleteDoctor);
+
 
 
 export const DoctorRoutes = router;

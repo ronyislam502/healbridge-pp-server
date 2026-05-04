@@ -59,9 +59,27 @@ const deleteDoctor = catchAsync(async (req, res) => {
   });
 });
 
+const updateDoctorSpecialties = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { specialties } = req.body;
+  const result = await DoctorServices.updateDoctorSpecialtiesIntoDB(
+    id,
+    specialties
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Doctor Specialties Updated Successfully",
+    data: result,
+  });
+});
+
 export const DoctorControllers = {
-    allDoctors,
-    singleDoctor,
-    updateDoctor,
-    deleteDoctor
-}
+  allDoctors,
+  singleDoctor,
+  updateDoctor,
+  deleteDoctor,
+  updateDoctorSpecialties,
+};
+

@@ -7,17 +7,19 @@ import { ScheduleValidations } from "./schedule.validation";
 
 const router = Router();
 
-router.get(
-    "/",
-    auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR),
-    ScheduleControllers.getAllSchedules
-);
+
 
 router.post(
-    "/",
-    auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+    "/create-schedule",
+    // auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
     validateRequest(ScheduleValidations.createSchedule),
     ScheduleControllers.createSchedule
+);
+
+router.get(
+    "/",
+    // auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR),
+    ScheduleControllers.getAllSchedules
 );
 
 router.delete(
