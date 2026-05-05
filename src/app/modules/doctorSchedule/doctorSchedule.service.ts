@@ -2,9 +2,9 @@ import { DoctorSchedules, Prisma } from "@prisma/client";
 import prisma from "../../shared/prisma";
 import { IQueryParams } from "../../interface/query.interface";
 import { QueryBuilder } from "../../builder/queryBuilder";
-import { IDoctorScheduleFilterRequest } from "./doctorSchedule.interface";
+import { JwtPayload } from "jsonwebtoken";
 
-const createDoctorScheduleIntoDB = async (user: any, payload: { scheduleIds: string[] }) => {
+const createDoctorScheduleIntoDB = async (user: JwtPayload, payload: { scheduleIds: string[] }) => {
     const doctorData = await prisma.doctor.findUniqueOrThrow({
         where: {
             email: user?.email
@@ -24,41 +24,39 @@ const createDoctorScheduleIntoDB = async (user: any, payload: { scheduleIds: str
 };
 
 const getMySchedulesFromDB = async (
-    user: any,
+    user: JwtPayload,
     query: IQueryParams
 ) => {
-    const { searchTerm, ...filterData } = query;
 
-    const doctorData = await prisma.doctor.findUniqueOrThrow({
+    const isDoctor = await prisma.doctor.findUniqueOrThrow({
         where: {
             email: user?.email
         }
     });
 
+    query.doctorId = isDoctor.id;
+
     const doctorScheduleQuery = new QueryBuilder<DoctorSchedules>(prisma.doctorSchedules, query)
-        .where({ doctorId: doctorData.id })
         .filter()
         .sort()
         .paginate()
         .fields()
         .include({
-            schedule: true
+            schedule: true,
+            doctor:true
         });
 
-    if (Object.keys(filterData).length > 0) {
-        doctorScheduleQuery.where(filterData as any);
-    }
 
-    const result = await doctorScheduleQuery.execute();
+    const data = await doctorScheduleQuery.execute();
     const meta = await doctorScheduleQuery.countTotal();
 
     return {
-        meta,
-        data: result
+        data,
+        meta
     };
 };
 
-const deleteDoctorScheduleFromDB = async (user: any, scheduleId: string) => {
+const deleteDoctorScheduleFromDB = async (user: JwtPayload, scheduleId: string) => {
     const doctorData = await prisma.doctor.findUniqueOrThrow({
         where: {
             email: user?.email
@@ -80,8 +78,7 @@ const deleteDoctorScheduleFromDB = async (user: any, scheduleId: string) => {
 const getAllDoctorSchedulesFromDB = async (
     query: IQueryParams
 ) => {
-    const { searchTerm, ...filterData } = query;
-
+   
     const doctorScheduleQuery = new QueryBuilder<DoctorSchedules>(prisma.doctorSchedules, query)
         .filter()
         .sort()
@@ -92,27 +89,12 @@ const getAllDoctorSchedulesFromDB = async (
             schedule: true
         });
 
-    if (searchTerm) {
-        doctorScheduleQuery.where({
-            doctor: {
-                name: {
-                    contains: searchTerm,
-                    mode: 'insensitive'
-                }
-            }
-        });
-    }
-
-    if (Object.keys(filterData).length > 0) {
-        doctorScheduleQuery.where(filterData as any);
-    }
-
-    const result = await doctorScheduleQuery.execute();
+    const data = await doctorScheduleQuery.execute();
     const meta = await doctorScheduleQuery.countTotal();
 
     return {
         meta,
-        data: result
+        data
     };
 };
 

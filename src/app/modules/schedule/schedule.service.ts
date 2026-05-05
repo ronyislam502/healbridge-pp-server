@@ -4,6 +4,7 @@ import prisma from "../../shared/prisma";
 import { ISchedule } from "./schedule.interface";
 import { IQueryParams } from "../../interface/query.interface";
 import { QueryBuilder } from "../../builder/queryBuilder";
+import { JwtPayload } from "jsonwebtoken";
 
 const createScheduleIntoDB = async (payload: ISchedule): Promise<Schedule[]> => {
     const { startDate, endDate, startTime, endTime } = payload;
@@ -52,21 +53,41 @@ const createScheduleIntoDB = async (payload: ISchedule): Promise<Schedule[]> => 
     return schedules;
 };
 
+
 const getAllSchedulesFromDB = async (
-    options: IQueryParams
+    user: JwtPayload,
+    query: IQueryParams
 ) => {
-    const scheduleQuery = new QueryBuilder<Schedule>(prisma.schedule, options)
+    const isDoctorSchedule = await prisma.doctorSchedules.findMany({
+        where: {
+            doctor: {
+                email: user.email,
+            },
+        },
+    });
+
+    const doctorScheduleIds = isDoctorSchedule.map(
+        (schedule) => schedule.scheduleId
+    );
+
+    const updatedQuery = {
+        ...query,
+        excludeScheduleIds: doctorScheduleIds,
+    };
+
+    const scheduleQuery = new QueryBuilder<Schedule>(prisma.schedule, updatedQuery)
+        .search([])
         .filter()
         .sort()
         .paginate()
         .fields();
 
-    const result = await scheduleQuery.execute();
+    const data = await scheduleQuery.execute();
     const meta = await scheduleQuery.countTotal();
 
     return {
         meta,
-        data: result
+        data,
     };
 };
 

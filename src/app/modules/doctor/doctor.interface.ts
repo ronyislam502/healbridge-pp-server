@@ -7,6 +7,17 @@ export const doctorSearchableFields = [
   "specialties",
 ];
 
+export const doctorFilterableFields = [
+  "name",
+  "email",
+  "phone",
+  "gender",
+  "qualification",
+  "designation",
+  "registrationNumber",
+  "specialties",
+];
+
 export type TDoctorUpdate = {
   name?: string;
   avatar?: string;

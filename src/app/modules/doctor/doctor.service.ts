@@ -4,12 +4,16 @@ import { IQueryParams } from "../../interface/query.interface";
 import prisma, { TransactionClient } from "../../shared/prisma"
 import { TMeta } from "../../shared/sendResponse";
 import { TImageFile } from "../../interface/image.interface";
-import { doctorSearchableFields, ISpecialties, TDoctorUpdate } from "./doctor.interface";
+import { doctorFilterableFields, doctorSearchableFields, ISpecialties, TDoctorUpdate } from "./doctor.interface";
 
 const allDoctorsFromDB = async (
   query: IQueryParams
 ): Promise<{ data: Doctor[], meta: TMeta }> => {
-    const doctorBuilder = new QueryBuilder<Doctor>(prisma.doctor, query)
+    const { specialties, ...filterData } = query;
+
+    const doctorBuilder = new QueryBuilder<Doctor>(prisma.doctor, filterData, {
+        filterableFields: doctorFilterableFields
+    })
         .search(doctorSearchableFields)
         .filter()
         .sort()
@@ -27,6 +31,21 @@ const allDoctorsFromDB = async (
                 }
             }
         });
+    
+    if (specialties) {
+        doctorBuilder.where({
+            doctorSpecialties: {
+                some: {
+                    specialties: {
+                        title: {
+                            contains: specialties as string,
+                            mode: "insensitive"
+                        }
+                    }
+                }
+            }
+        });
+    }
     
     const data = await doctorBuilder.execute();
     const meta = await doctorBuilder.countTotal();

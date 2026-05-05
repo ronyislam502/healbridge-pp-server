@@ -6,7 +6,7 @@ export interface PrismaFindManyArgs {
   where?: Record<string, unknown>;
   include?: Record<string, unknown>;
   select?: Record<string, boolean | Record<string, unknown>>;
-  orderBy?: Record<string, unknown>;
+  orderBy?: Record<string, unknown> | Record<string, unknown>[];
   skip?: number;
   take?: number;
 }
@@ -28,6 +28,7 @@ export interface IQueryParams {
   sortOrder?: 'asc' | 'desc';
   fields?: string;
   includes?: string;
+  excludeScheduleIds?: string[];
 
   //  flexible query support
   [key: string]:
@@ -42,6 +43,10 @@ export interface IQueryParams {
 export interface IQueryConfig {
   searchableFields?: string[];
   filterableFields?: string[];
+  defaultSortBy?: string;
+  dateRangeField?: string;
+  startDateTimeKey?: string;
+  endDateTimeKey?: string;
 }
 
 export interface PrismaStringFilter {

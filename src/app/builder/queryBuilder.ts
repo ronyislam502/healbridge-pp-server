@@ -8,6 +8,7 @@ import {
   PrismaStringFilter,
   PrismaWhereConditions,
 } from "../interface/query.interface";
+import { format } from "date-fns";
 
 export class QueryBuilder<T> {
   private query: PrismaFindManyArgs;
@@ -89,26 +90,157 @@ export class QueryBuilder<T> {
 
   //  FILTER
   filter(): this {
-    const excluded = [
-      "searchTerm",
-      "page",
-      "limit",
-      "sortBy",
-      "sortOrder",
-      "fields",
-      "includes",
-    ];
+    const {
+      searchTerm,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      fields,
+      includes,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      excludeScheduleIds,
+      ...filterData
+    } = this.queryParams;
 
     const queryWhere = this.query.where as Record<string, unknown>;
     const countWhere = this.countQuery.where as Record<string, unknown>;
 
-    Object.entries(this.queryParams).forEach(([key, value]) => {
-      if (excluded.includes(key) || value === undefined || value === "")
+    // Handle excludeScheduleIds
+    if (excludeScheduleIds && excludeScheduleIds.length > 0) {
+      this.not({
+        id: {
+          in: excludeScheduleIds,
+        },
+      });
+    }
+
+    // Handle date and time range automatically
+    if (startDate || endDate || startTime || endTime) {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const startKey =
+        this.config.startDateTimeKey ||
+        this.config.dateRangeField ||
+        "startDateTime";
+      const endKey =
+        this.config.endDateTimeKey ||
+        this.config.dateRangeField ||
+        "endDateTime";
+
+      if (startDate || startTime) {
+        const sDate = (startDate as string) || today;
+        const timePart = startTime ? (startTime as string) : "00:00";
+        const [hours, minutes] = timePart.split(":");
+        const paddedTime = `${hours.padStart(2, "0")}:${minutes.padStart(
+          2,
+          "0"
+        )}:00.000`;
+
+        const gteValue = new Date(`${sDate}T${paddedTime}Z`);
+        queryWhere[startKey] = {
+          ...(queryWhere[startKey] as object),
+          gte: gteValue,
+        };
+        countWhere[startKey] = {
+          ...(countWhere[startKey] as object),
+          gte: gteValue,
+        };
+      }
+
+      if (endDate || endTime) {
+        const eDate = (endDate as string) || today;
+        let paddedTime;
+        if (endTime) {
+          const [hours, minutes] = (endTime as string).split(":");
+          paddedTime = `${hours.padStart(2, "0")}:${minutes.padStart(
+            2,
+            "0"
+          )}:00.000`;
+        } else {
+          paddedTime = "23:59:59.999";
+        }
+
+        const lteValue = new Date(`${eDate}T${paddedTime}Z`);
+        queryWhere[endKey] = {
+          ...(queryWhere[endKey] as object),
+          lte: lteValue,
+        };
+        countWhere[endKey] = {
+          ...(countWhere[endKey] as object),
+          lte: lteValue,
+        };
+      }
+    }
+
+    Object.entries(filterData).forEach(([key, value]) => {
+      if (
+        this.config.filterableFields &&
+        !this.config.filterableFields.includes(key)
+      ) {
         return;
+      }
+
+      if (value === undefined || value === "") return;
 
       queryWhere[key] = this.parseValue(value);
       countWhere[key] = this.parseValue(value);
     });
+
+    return this;
+  }
+
+  //  DATE RANGE FILTER
+  dateRange(startDateTimeKey: string, endDateTimeKey: string): this {
+    const { startDate, endDate, startTime, endTime } = this.queryParams;
+    const andConditions = [];
+    const today = format(new Date(), "yyyy-MM-dd");
+
+    if (startTime) {
+      const sDate = (startDate as string) || today;
+      const [hours, minutes] = (startTime as string).split(":");
+      const paddedStartTime = `${hours.padStart(2, "0")}:${minutes.padStart(
+        2,
+        "0"
+      )}`;
+      andConditions.push({
+        [startDateTimeKey]: {
+          gte: new Date(`${sDate}T${paddedStartTime}:00.000Z`),
+        },
+      });
+    } else if (startDate) {
+      andConditions.push({
+        [startDateTimeKey]: {
+          gte: new Date(`${startDate}T00:00:00.000Z`),
+        },
+      });
+    }
+
+    if (endTime) {
+      const eDate = (endDate as string) || today;
+      const [hours, minutes] = (endTime as string).split(":");
+      const paddedEndTime = `${hours.padStart(2, "0")}:${minutes.padStart(
+        2,
+        "0"
+      )}`;
+      andConditions.push({
+        [endDateTimeKey]: {
+          lte: new Date(`${eDate}T${paddedEndTime}:00.000Z`),
+        },
+      });
+    } else if (endDate) {
+      andConditions.push({
+        [endDateTimeKey]: {
+          lte: new Date(`${endDate}T23:59:59.999Z`),
+        },
+      });
+    }
+
+    if (andConditions.length > 0) {
+      this.where({ AND: andConditions });
+    }
 
     return this;
   }
@@ -130,13 +262,20 @@ export class QueryBuilder<T> {
 
   //  SORT
   sort(): this {
-    const sortBy = this.queryParams.sortBy || "createdAt";
-    const sortOrder =
-      this.queryParams.sortOrder === "asc" ? "asc" : "desc";
+    const sortBy =
+      (this.queryParams.sortBy as string) ||
+      this.config.defaultSortBy ||
+      "createdAt";
+    const sortOrder = (this.queryParams.sortOrder as string) || "desc";
 
-    this.query.orderBy = {
-      [sortBy]: sortOrder,
-    };
+    const sortByArray = sortBy.split(",");
+    const sortOrderArray = sortOrder.split(",");
+
+    const orderBy = sortByArray.map((field, index) => ({
+      [field.trim()]: sortOrderArray[index] || sortOrderArray[0] || "desc",
+    }));
+
+    this.query.orderBy = orderBy;
 
     return this;
   }
@@ -188,6 +327,26 @@ export class QueryBuilder<T> {
     return this;
   }
 
+  //  NOT (exclude)
+  not(condition: Record<string, unknown>): this {
+    const queryWhere = this.query.where as any;
+    const countWhere = this.countQuery.where as any;
+
+    if (queryWhere.NOT) {
+      queryWhere.NOT = { ...queryWhere.NOT, ...condition };
+    } else {
+      queryWhere.NOT = condition;
+    }
+
+    if (countWhere.NOT) {
+      countWhere.NOT = { ...countWhere.NOT, ...condition };
+    } else {
+      countWhere.NOT = condition;
+    }
+
+    return this;
+  }
+
   //  EXECUTE (DATA ONLY)
   async execute(): Promise<T[]> {
     const data = await this.model.findMany(
@@ -222,6 +381,14 @@ export class QueryBuilder<T> {
 
     if (Array.isArray(value)) {
       return { in: value };
+    }
+
+    if (typeof value === "object" && value !== null) {
+      const parsedObj: Record<string, unknown> = {};
+      Object.entries(value).forEach(([k, v]) => {
+        parsedObj[k] = this.parseValue(v);
+      });
+      return parsedObj;
     }
 
     return value;

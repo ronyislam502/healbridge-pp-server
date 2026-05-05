@@ -16,7 +16,7 @@ const createSchedule = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllSchedules = catchAsync(async (req: Request, res: Response) => {
-    const result = await ScheduleServices.getAllSchedulesFromDB(req.query as IQueryParams);
+    const result = await ScheduleServices.getAllSchedulesFromDB(req.user, req.query as IQueryParams);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
