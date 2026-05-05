@@ -9,6 +9,8 @@ import { DoctorValidations } from "./doctor.validation";
 
 const router = Router();
 
+router.post("/suggestion", DoctorControllers.aiDoctorSuggestion);
+
 router.get("/", DoctorControllers.allDoctors);
 
 router.get("/:id", DoctorControllers.singleDoctor);

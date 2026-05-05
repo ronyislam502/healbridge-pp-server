@@ -341,7 +341,7 @@
   dependencies:
     "@types/express" "*"
 
-"@types/node@*", "@types/node@^24.5.0":
+"@types/node@*", "@types/node@^24.5.0", "@types/node@>=18":
   version "24.5.0"
   resolved "https://registry.npmjs.org/@types/node/-/node-24.5.0.tgz"
   integrity sha512-y1dMvuvJspJiPSDZUQ+WMBvF7dpnEqN4x9DDC9ie5Fs/HUZJA3wFp7EhHoVaKX/iI0cRoECV8X2jL8zi0xrHCg==
@@ -1378,6 +1378,11 @@ once@^1.3.0, once@^1.4.0:
   dependencies:
     wrappy "1"
 
+openai@^6.36.0:
+  version "6.36.0"
+  resolved "https://registry.npmjs.org/openai/-/openai-6.36.0.tgz"
+  integrity sha512-Has2YbIusMq9wQEierFsgf9c783dy1y9arX459LmphNacEkkM5yxi2RIyXP0LmkOroQyW19iTwALHL8Yf26UKA==
+
 parseurl@^1.3.3:
   version "1.3.3"
   resolved "https://registry.npmjs.org/parseurl/-/parseurl-1.3.3.tgz"
@@ -1838,6 +1843,11 @@ strip-json-comments@^2.0.0:
   resolved "https://registry.npmjs.org/strip-json-comments/-/strip-json-comments-2.0.1.tgz"
   integrity sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==
 
+stripe@^22.1.0:
+  version "22.1.0"
+  resolved "https://registry.npmjs.org/stripe/-/stripe-22.1.0.tgz"
+  integrity sha512-w/xHyJGxXWnLPbNHG13sz/fae0MrFGC80Oz7YbICQymbfpqfEcsoG+6yG+9BWb81PWc4rrkeSO4wmTcmefmbLw==
+
 supports-preserve-symlinks-flag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz"
@@ -1997,7 +2007,7 @@ zeptomatch@2.1.0:
     grammex "^3.1.11"
     graphmatch "^1.1.0"
 
-zod@^4.4.2:
+"zod@^3.25 || ^4.0", zod@^4.4.2:
   version "4.4.2"
   resolved "https://registry.npmjs.org/zod/-/zod-4.4.2.tgz"
   integrity sha512-IynmDyxsEsb9RKzO3J9+4SxXnl2FTFSzNBaKKaMV6tsSk0rw9gYw9gs+JFCq/qk2LCZ78KDwyj+Z289TijSkUw==

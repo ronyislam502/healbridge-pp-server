@@ -5,6 +5,17 @@ import sendResponse from "../../shared/sendResponse";
 import httpStatus  from 'http-status';
 import { DoctorServices } from "./doctor.service";
 
+const aiDoctorSuggestion = catchAsync(async (req, res) => {
+  const result = await DoctorServices.aiDoctorSuggestionFromDB(req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "AI suggestion doctors successfully",
+    data: result,
+  });
+});
+
 const allDoctors = catchAsync(async (req, res) => {
     const result = await DoctorServices.allDoctorsFromDB(req.query as IQueryParams);
 
@@ -81,5 +92,6 @@ export const DoctorControllers = {
   updateDoctor,
   deleteDoctor,
   updateDoctorSpecialties,
+  aiDoctorSuggestion
 };
 

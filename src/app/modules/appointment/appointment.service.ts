@@ -57,7 +57,7 @@ const createAppointmentIntoDB = async (user: any, payload: any) => {
         });
 
         const today = new Date();
-        const transactionId = "PH-" + today.getFullYear() + (today.getMonth() + 1) + today.getDate() + today.getHours() + today.getMinutes();
+        const transactionId = "HB-" + today.getFullYear() + (today.getMonth() + 1) + today.getDate() + today.getHours() + today.getMinutes();
 
         await transactionClient.payment.create({
             data: {
