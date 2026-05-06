@@ -5,6 +5,12 @@ import { UserRole } from "@prisma/client";
 
 const router = Router();
 
+router.post(
+    "/create-appointment",
+    auth(UserRole.PATIENT),
+    AppointmentControllers.createAppointment
+);
+
 router.get(
     "/",
     auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
@@ -17,10 +23,6 @@ router.get(
     AppointmentControllers.getMyAppointments
 );
 
-router.post(
-    "/",
-    auth(UserRole.PATIENT),
-    AppointmentControllers.createAppointment
-);
+
 
 export const AppointmentRoutes = router;

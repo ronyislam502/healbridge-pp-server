@@ -76,6 +76,18 @@ export class QueryBuilder<T> {
           }
         }
 
+        if (field === "specialties") {
+          return {
+            doctorSpecialties: {
+              some: {
+                specialties: {
+                  title: filter,
+                },
+              },
+            },
+          };
+        }
+
         return {
           [field]: filter,
         };
@@ -185,62 +197,26 @@ export class QueryBuilder<T> {
 
       if (value === undefined || value === "") return;
 
-      queryWhere[key] = this.parseValue(value);
-      countWhere[key] = this.parseValue(value);
+      if (key === "specialties") {
+        const specialtyCondition = {
+          doctorSpecialties: {
+            some: {
+              specialties: {
+                title: {
+                  contains: value as string,
+                  mode: "insensitive",
+                },
+              },
+            },
+          },
+        };
+        Object.assign(queryWhere, specialtyCondition);
+        Object.assign(countWhere, specialtyCondition);
+      } else {
+        queryWhere[key] = this.parseValue(value);
+        countWhere[key] = this.parseValue(value);
+      }
     });
-
-    return this;
-  }
-
-  //  DATE RANGE FILTER
-  dateRange(startDateTimeKey: string, endDateTimeKey: string): this {
-    const { startDate, endDate, startTime, endTime } = this.queryParams;
-    const andConditions = [];
-    const today = format(new Date(), "yyyy-MM-dd");
-
-    if (startTime) {
-      const sDate = (startDate as string) || today;
-      const [hours, minutes] = (startTime as string).split(":");
-      const paddedStartTime = `${hours.padStart(2, "0")}:${minutes.padStart(
-        2,
-        "0"
-      )}`;
-      andConditions.push({
-        [startDateTimeKey]: {
-          gte: new Date(`${sDate}T${paddedStartTime}:00.000Z`),
-        },
-      });
-    } else if (startDate) {
-      andConditions.push({
-        [startDateTimeKey]: {
-          gte: new Date(`${startDate}T00:00:00.000Z`),
-        },
-      });
-    }
-
-    if (endTime) {
-      const eDate = (endDate as string) || today;
-      const [hours, minutes] = (endTime as string).split(":");
-      const paddedEndTime = `${hours.padStart(2, "0")}:${minutes.padStart(
-        2,
-        "0"
-      )}`;
-      andConditions.push({
-        [endDateTimeKey]: {
-          lte: new Date(`${eDate}T${paddedEndTime}:00.000Z`),
-        },
-      });
-    } else if (endDate) {
-      andConditions.push({
-        [endDateTimeKey]: {
-          lte: new Date(`${endDate}T23:59:59.999Z`),
-        },
-      });
-    }
-
-    if (andConditions.length > 0) {
-      this.where({ AND: andConditions });
-    }
 
     return this;
   }
@@ -300,6 +276,15 @@ export class QueryBuilder<T> {
     return this;
   }
 
+  //  SELECT (manual)
+  select(select: Record<string, boolean>): this {
+    this.selectFields = select;
+    this.query.select = select;
+    delete this.query.include;
+
+    return this;
+  }
+
   //  INCLUDE
   include(include: Record<string, unknown>): this {
     if (this.selectFields) return this;
@@ -312,20 +297,6 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  //  WHERE (manual)
-  where(condition: Record<string, unknown>): this {
-    this.query.where = {
-      ...(this.query.where as object),
-      ...condition,
-    };
-
-    this.countQuery.where = {
-      ...(this.countQuery.where as object),
-      ...condition,
-    };
-
-    return this;
-  }
 
   //  NOT (exclude)
   not(condition: Record<string, unknown>): this {

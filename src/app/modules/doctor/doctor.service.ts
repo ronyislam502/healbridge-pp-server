@@ -1,7 +1,7 @@
 import { Doctor, UserStatus } from "@prisma/client";
 import { QueryBuilder } from "../../builder/queryBuilder";
 import { IQueryParams } from "../../interface/query.interface";
-import prisma, { TransactionClient } from "../../shared/prisma"
+import prisma from "../../shared/prisma"
 import { TMeta } from "../../shared/sendResponse";
 import { TImageFile } from "../../interface/image.interface";
 import { doctorFilterableFields, doctorSearchableFields, ISpecialties } from "./doctor.interface";
@@ -68,7 +68,7 @@ Notes:
 `;
 
   const completion = await openai.chat.completions.create({
-    model: 'arcee-ai/trinity-large-preview:free',
+    model: 'tencent/hy3-preview:free',
     messages: [
     {
         role: "system",
@@ -92,11 +92,8 @@ Notes:
 const allDoctorsFromDB = async (
   query: IQueryParams
 ): Promise<{ data: Doctor[], meta: TMeta }> => {
-    const { specialties, ...filterData } = query;
 
-    const doctorBuilder = new QueryBuilder<Doctor>(prisma.doctor, filterData, {
-        filterableFields: doctorFilterableFields
-    })
+    const doctorBuilder = new QueryBuilder<Doctor>(prisma.doctor, query)
         .search(doctorSearchableFields)
         .filter()
         .sort()
@@ -114,21 +111,6 @@ const allDoctorsFromDB = async (
                 }
             }
         });
-    
-    if (specialties) {
-        doctorBuilder.where({
-            doctorSpecialties: {
-                some: {
-                    specialties: {
-                        title: {
-                            contains: specialties as string,
-                            mode: "insensitive"
-                        }
-                    }
-                }
-            }
-        });
-    }
     
     const data = await doctorBuilder.execute();
     const meta = await doctorBuilder.countTotal();

@@ -4,10 +4,10 @@ import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
 import { AppointmentServices } from "./appointment.service";
 import { IQueryParams } from "../../interface/query.interface";
+import { JwtPayload } from "jsonwebtoken";
 
-const createAppointment = catchAsync(async (req: Request, res: Response) => {
-    const user = (req as any).user;
-    const result = await AppointmentServices.createAppointmentIntoDB(user, req.body);
+const createAppointment = catchAsync(async (req, res) => {
+    const result = await AppointmentServices.createAppointmentIntoDB(req.user as JwtPayload, req.body);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -16,7 +16,7 @@ const createAppointment = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const getAllAppointments = catchAsync(async (req: Request, res: Response) => {
+const getAllAppointments = catchAsync(async (req, res) => {
     const result = await AppointmentServices.getAllAppointmentsFromDB(req.query as IQueryParams);
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -27,9 +27,8 @@ const getAllAppointments = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const getMyAppointments = catchAsync(async (req: Request, res: Response) => {
-    const user = (req as any).user;
-    const result = await AppointmentServices.getMyAppointmentsFromDB(user, req.query as IQueryParams);
+const getMyAppointments = catchAsync(async (req, res) => {
+    const result = await AppointmentServices.getMyAppointmentsFromDB( req.user as JwtPayload, req.query as IQueryParams);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,

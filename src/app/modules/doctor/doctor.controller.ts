@@ -41,7 +41,7 @@ const singleDoctor = catchAsync(async (req, res) => {
 })
 
 
-const updateDoctor = catchAsync(async (req: any, res) => {
+const updateDoctor = catchAsync(async (req, res) => {
     const { id } = req.params;
     const { doctor } = req.body;
     const result = await DoctorServices.updateDoctorIntoDB(

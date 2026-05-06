@@ -3,6 +3,7 @@ import cors from "cors";
 import router from "./app/routes";
 import notFound from "./app/middlewares/notFound";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
+import { PaymentController } from "./app/modules/payment/payment.controller";
 
 
 const app: Application = express();
@@ -13,6 +14,12 @@ app.use(express.json());
 
 //parser
 app.use(express.urlencoded({ extended: true }));
+
+app.post(
+    "/webhook",
+    express.raw({ type: "application/json" }),
+    PaymentController.handleStripeWebhookEvent
+);
 
 
 const getController = (req: Request, res: Response) => {

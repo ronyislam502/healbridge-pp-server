@@ -6,6 +6,8 @@ import { validateRequest } from "../../middlewares/validateRequest";
 import { AdminValidations } from "../admin/admin.validation";
 import { DoctorValidations } from "../doctor/doctor.validation";
 import { PatientValidations } from "../patient/patient.validation";
+import auth from "../../middlewares/auth";
+import { UserRole } from "@prisma/client";
 
 const router = Router();
 
@@ -26,6 +28,39 @@ router.post("/create-patient",
     parseBody,
     validateRequest(PatientValidations.createPatientValidationSchema),
     UserControllers.createPatient);
+
+router.get(
+  "/",
+  // auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  UserControllers.getAllUsers
+);
+
+router.get(
+  "/my-profile",
+  auth(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT, UserRole.SUPER_ADMIN),
+  UserControllers.getMyProfile
+);
+
+router.get(
+  "/:email",
+  auth(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT, UserRole.SUPER_ADMIN),
+  UserControllers.getSingleUser
+);
+
+router.patch(
+  "/:id/status",
+  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  UserControllers.changeProfileStatus
+);
+
+router.patch(
+  "/update-my-profile",
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT),
+  multerUpload.single("image"),
+  parseBody,
+  UserControllers.updateMyProfile
+);
+
 
 
 

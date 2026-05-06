@@ -1,76 +1,129 @@
-import { Appointment, AppointmentStatus, PaymentStatus, Prisma } from "@prisma/client";
+import { Appointment, Prisma } from "@prisma/client";
 import { v4 as uuidv4 } from 'uuid';
-import prisma from "../../shared/prisma";
+import prisma, { TransactionClient } from "../../shared/prisma";
 import { IQueryParams } from "../../interface/query.interface";
 import { QueryBuilder } from "../../builder/queryBuilder";
 import { appointmentSearchableFields } from "./appointment.interface";
+import { stripe } from "../../shared/stripe";
+import AppError from "../../errors/AppError";
+import { JwtPayload } from "jsonwebtoken";
+import httpStatus from "http-status";
 
-const createAppointmentIntoDB = async (user: any, payload: any) => {
-    const patientData = await prisma.patient.findUniqueOrThrow({
-        where: {
-            email: user?.email
-        }
-    });
+const createAppointmentIntoDB = async (
+  user: JwtPayload,
+  payload: Appointment
+) => {
+  const isPatient = await prisma.patient.findUniqueOrThrow({
+    where: {
+      email: user.email,
+    },
+  });
 
-    const doctorData = await prisma.doctor.findUniqueOrThrow({
-        where: {
-            id: payload.doctorId
-        }
-    });
+  const isDoctor = await prisma.doctor.findUniqueOrThrow({
+    where: {
+      id: payload.doctorId,
+    },
+  });
 
-    await prisma.doctorSchedules.findFirstOrThrow({
+  const isSchedule = await prisma.doctorSchedules.findFirst({
+    where: {
+      doctorId: isDoctor.id,
+      scheduleId: payload.scheduleId,
+      isBooked: false,
+    },
+  });
+
+  if (!isSchedule) {
+    throw new AppError(httpStatus.NOT_FOUND, "This schedule not found");
+  }
+
+  const videoCallingId: string = uuidv4();
+
+  const result = await prisma.$transaction(
+    async (transactionClient: TransactionClient) => {
+      const appointmentData = await transactionClient.appointment.create({
+        data: {
+          patientId: isPatient.id,
+          doctorId: isDoctor.id,
+          scheduleId: payload.scheduleId,
+          videoCallingId,
+        },
+        include: {
+          patient: true,
+          doctor: true,
+          schedule: true,
+        },
+      });
+
+      await transactionClient.doctorSchedules.update({
         where: {
-            doctorId: doctorData.id,
+          doctorId_scheduleId: {
+            doctorId: isDoctor.id,
             scheduleId: payload.scheduleId,
-            isBooked: false
-        }
-    });
+          },
+        },
+        data: {
+          isBooked: true,
+          appointmentId: appointmentData.id,
+        },
+      });
 
-    const videoCallingId = uuidv4();
+      const today = new Date();
+      const transactionId =
+        "HB" +
+        today.getFullYear() +
+        +today.getMonth() +
+        +today.getDay() +
+        +today.getHours() +
+        +today.getMinutes() +
+        +today.getSeconds();
 
-    const result = await prisma.$transaction(async (transactionClient) => {
-        const appointmentData = await transactionClient.appointment.create({
-            data: {
-                patientId: patientData.id,
-                doctorId: doctorData.id,
-                scheduleId: payload.scheduleId,
-                videoCallingId
+      console.log("trans_id", transactionId);
+
+     const paymentData= await transactionClient.payment.create({
+        data: {
+          appointmentId: appointmentData.id,
+          amount: isDoctor.appointmentFee,
+          transactionId,
+        },
+      });
+
+      const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: `Appointment with ${isDoctor.name}`,
+                },
+                unit_amount: paymentData.amount * 100,
+              },
+              quantity: 1,
             },
-            include: {
-                patient: true,
-                doctor: true,
-                schedule: true
-            }
-        });
+          ],
+        mode: "payment",
+          success_url: `https://www.programming-hero.com/`,
+          cancel_url: `https://next.programming-hero.com/`,
+          // success_url: `${config.reset_pass_link}/success?session_id={CHECKOUT_SESSION_ID}`,
+          // cancel_url: `${config.reset_pass_link}/cancel`,
+          customer_email: isPatient.email,
+          metadata: {
+            appointmentId: paymentData.appointmentId,
+            transactionId: paymentData.transactionId,
+        },
+           payment_intent_data: {
+             metadata: {
+             appointmentId: appointmentData.id,
+             transactionId,
+          },
+        },
+      });
+       return { paymentUrl: session.url };
+    }
+  );
 
-        await transactionClient.doctorSchedules.update({
-            where: {
-                doctorId_scheduleId: {
-                    doctorId: doctorData.id,
-                    scheduleId: payload.scheduleId
-                }
-            },
-            data: {
-                isBooked: true,
-                appointmentId: appointmentData.id
-            }
-        });
-
-        const today = new Date();
-        const transactionId = "HB-" + today.getFullYear() + (today.getMonth() + 1) + today.getDate() + today.getHours() + today.getMinutes();
-
-        await transactionClient.payment.create({
-            data: {
-                appointmentId: appointmentData.id,
-                amount: doctorData.appointmentFee,
-                transactionId
-            }
-        });
-
-        return appointmentData;
-    });
-
-    return result;
+  return result;
 };
 
 const getAllAppointmentsFromDB = async (query: IQueryParams) => {
@@ -93,7 +146,7 @@ const getAllAppointmentsFromDB = async (query: IQueryParams) => {
     return { data, meta };
 };
 
-const getMyAppointmentsFromDB = async (user: any, query: IQueryParams) => {
+const getMyAppointmentsFromDB = async (user: JwtPayload, query: IQueryParams) => {
     const patientData = await prisma.patient.findUnique({
         where: {
             email: user?.email
@@ -115,7 +168,6 @@ const getMyAppointmentsFromDB = async (user: any, query: IQueryParams) => {
     }
 
     const appointmentQuery = new QueryBuilder<Appointment>(prisma.appointment, query)
-        .where(where as any)
         .search(appointmentSearchableFields)
         .filter()
         .sort()
